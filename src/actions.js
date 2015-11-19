@@ -1,25 +1,51 @@
-// Make a request to the server for all instances of the given type. Generally
-// this would result in a GET request to a URL in the format /api/:type.
+// Create generic Redux action creator functions for Kudu client applications.
+// The exposed actions rely on redux-thunk store middleware and are used to make
+// requests to the generic route handlers of a server-side Kudu application.
 //
-// Arguments:
-//   kudu    {Kudu}      A Kudu client application instance.
-//   type    {String}    The singular name of a model registered with the given
-//                       Kudu instance.
+// Usage (assuming a configured Kudu client application instance as `kudu`, a
+// model registered with that application with singular type "user" and a
+// configured Redux store as `store`):
 //
-export function getAll( kudu, type ) {
+//   ```
+//   import createKuduActionCreators from 'kudu-client-redux-actions';
+//   const actions = createKuduActionCreators(kudu);
+//
+//   store.dispatch(actions.getAll('user'));
+//   ```
+//
+export default function createKuduActionCreators( kudu ) {
 
-  return ( dispatch ) => {
+  return {
 
-    const Model = kudu.getModel(type);
+    // Make a request to the server for all instances of the given type.
+    // Generally this would result in a GET request to a URL in the format
+    // /api/:type.
+    //
+    // Arguments:
+    //   kudu    {Kudu}      A Kudu client application instance.
+    //   type    {String}    The singular name of a model registered with the
+    //                       given Kudu instance.
+    //
+    getAll( type ) {
 
-    if ( !Model ) {
-      throw new Error(`No model constructor found for type "${ type }"`);
-    }
+      return ( dispatch ) => {
 
-    dispatch(getAllRequested(Model.plural));
-    return Model.getAll()
-    .then(( instances ) => dispatch(getAllSucceeded(Model.plural, instances)))
-    .catch(( error ) => dispatch(getAllFailed(Model.plural, error)));
+        const Model = kudu.getModel(type);
+
+        if ( !Model ) {
+          throw new Error(`No model constructor found for type "${ type }"`);
+        }
+
+        dispatch(getAllRequested(Model.plural));
+        return Model.getAll()
+        .then(( instances ) =>
+          dispatch(getAllSucceeded(Model.plural, instances))
+        )
+        .catch(( error ) =>
+          dispatch(getAllFailed(Model.plural, error))
+        );
+      };
+    },
   };
 }
 

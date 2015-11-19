@@ -3,7 +3,7 @@ import { applyMiddleware } from 'redux';
 import thunk from 'redux-thunk';
 import Kudu from 'kudu-client';
 import nock from 'nock';
-import * as actions from '../src/actions';
+import createKuduActionCreators from '../src/actions';
 
 const expect = chai.expect;
 const mockApp = new Kudu({
@@ -20,6 +20,7 @@ const MockModel = mockApp.createModel('test', {
     },
   },
 });
+const actions = createKuduActionCreators(mockApp);
 
 // Create a mock Redux store with middleware. Adapted from
 // http://rackt.org/redux/docs/recipes/WritingTests.html#async-action-creators.
@@ -65,6 +66,12 @@ describe('Actions', () => {
 
   describe('getAll', () => {
 
+    it('should throw if no corresponding Kudu model is found', () => {
+      let store = mockStore({}, []);
+      let test = () => store.dispatch(actions.getAll('fail'));
+      expect(test).to.throw(Error, /No model/);
+    });
+
     it('creates GET_ALL_SUCCEEDED when the request completes successfully', ( done ) => {
 
       let data = [
@@ -78,7 +85,7 @@ describe('Actions', () => {
       let store = mockStore({}, expectedActions, done);
 
       nock('http://example.com').get('/tests').reply(200, { data });
-      store.dispatch(actions.getAll(mockApp, 'test'));
+      store.dispatch(actions.getAll('test'));
     });
 
     it('creates GET_ALL_FAILED when the request fails', ( done ) => {
@@ -90,7 +97,7 @@ describe('Actions', () => {
       let store = mockStore({}, expectedActions, done);
 
       nock('http://example.com').get('/tests').reply(500);
-      store.dispatch(actions.getAll(mockApp, 'test'));
+      store.dispatch(actions.getAll('test'));
     });
   });
 });
