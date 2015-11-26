@@ -22,7 +22,6 @@ export default function createKuduActionCreators( kudu ) {
     // /api/:type.
     //
     // Arguments:
-    //   kudu    {Kudu}      A Kudu client application instance.
     //   type    {String}    The singular name of a model registered with the
     //                       given Kudu instance.
     //
