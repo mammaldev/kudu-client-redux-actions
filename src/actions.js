@@ -19,13 +19,14 @@ export default function createKuduActionCreators( kudu ) {
 
     // Make a request to the server for all instances of the given type.
     // Generally this would result in a GET request to a URL in the format
-    // /api/:type.
+    // /api/:type. Any options supported by the Kudu client library are
+    // supported here and simply passed through.
     //
     // Arguments:
     //   type    {String}    The singular name of a model registered with the
     //                       given Kudu instance.
     //
-    getAll( type ) {
+    getAll( type, opts = {} ) {
 
       return ( dispatch ) => {
 
@@ -36,7 +37,7 @@ export default function createKuduActionCreators( kudu ) {
         }
 
         dispatch(getAllRequested(Model.plural));
-        return Model.getAll()
+        return Model.getAll(opts)
         .then(( instances ) =>
           dispatch(getAllSucceeded(Model.plural, instances))
         )
