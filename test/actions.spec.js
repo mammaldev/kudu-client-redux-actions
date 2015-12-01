@@ -64,6 +64,42 @@ function mockStore( getState, expectedActions, done ) {
 
 describe('Actions', () => {
 
+  describe('save', () => {
+
+    it('should throw if not passed a Kudu model instance', () => {
+      let store = mockStore({}, []);
+      let test = () => store.dispatch(actions.save());
+      expect(test).to.throw(Error, /Expected a model instance/);
+    });
+
+    it('creates SAVE_SUCCEEDED when the request completes successfully', ( done ) => {
+
+      let data = new MockModel({ name: 'test' });
+      let response = mockApp.serialize.toJSON(new MockModel({ name: 'test', id: '1' }));
+      let expectedActions = [
+        { type: 'SAVE_TEST' },
+        { type: 'SAVE_TEST_SUCCEEDED' },
+      ];
+      let store = mockStore({}, expectedActions, done);
+
+      nock('http://example.com').post('/tests').reply(201, response);
+      store.dispatch(actions.save('test', data));
+    });
+
+    it('creates SAVE_FAILED when the request fails', ( done ) => {
+
+      let data = new MockModel({ name: 'test' });
+      let expectedActions = [
+        { type: 'SAVE_TEST' },
+        { type: 'SAVE_TEST_FAILED' },
+      ];
+      let store = mockStore({}, expectedActions, done);
+
+      nock('http://example.com').post('/tests').reply(500);
+      store.dispatch(actions.save('test', data));
+    });
+  });
+
   describe('getAll', () => {
 
     it('should throw if no corresponding Kudu model is found', () => {

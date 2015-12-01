@@ -17,6 +17,31 @@ export default function createKuduActionCreators( kudu ) {
 
   return {
 
+    // Make a request to the server to persist a model instance. Generally this
+    // would result in a POST request to a URL in the format /api/:type. Any
+    // options supported by the Kudu client library are supported here and are
+    // simply passed through.
+    //
+    // Arguments:
+    //   instance    {Object}    The Kudu model instance to persist.
+    //
+    save( type, instance, opts = {} ) {
+
+      return ( dispatch ) => {
+
+        if ( !instance || typeof instance.save !== 'function' ) {
+          throw new Error('Expected a model instance to save.');
+        }
+
+        const type = instance.constructor.singular;
+        dispatch(saveRequested(type));
+
+        return instance.save(opts)
+        .then(( instance ) => dispatch(saveSucceeded(type, instance)))
+        .catch(( error ) => dispatch(saveFailed(type, error)));
+      };
+    },
+
     // Make a request to the server for all instances of the given type.
     // Generally this would result in a GET request to a URL in the format
     // /api/:type. Any options supported by the Kudu client library are
@@ -46,6 +71,43 @@ export default function createKuduActionCreators( kudu ) {
         );
       };
     },
+  };
+}
+
+// Dispatched when the "save" action creator is run.
+//
+// Arguments:
+//   type    {String}    The singular name of a Kudu model.
+//
+function saveRequested( type ) {
+  return {
+    type: `SAVE_${ type.toUpperCase() }`,
+  };
+}
+
+// Dispatched when a "save" action has completed successfully.
+//
+// Arguments:
+//   type        {String}    The singular name of a Kudu model.
+//   instance    {Object}    The instance that has been saved.
+//
+function saveSucceeded( type, instance ) {
+  return {
+    type: `SAVE_${ type.toUpperCase() }_SUCCEEDED`,
+    [ type ]: instance,
+  };
+}
+
+// Dispatched when a "save" action has failed.
+//
+// Arguments:
+//   type     {String}    The singular name of a Kudu model.
+//   error    {Error}     An Error object representing the reason for failure.
+//
+function saveFailed( type, error ) {
+  return {
+    type: `SAVE_${ type.toUpperCase() }_FAILED`,
+    error,
   };
 }
 
