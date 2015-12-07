@@ -100,6 +100,40 @@ describe('Actions', () => {
     });
   });
 
+  describe('get', () => {
+
+    it('should throw if no corresponding Kudu model is found', () => {
+      let store = mockStore({}, []);
+      let test = () => store.dispatch(actions.get('fail'));
+      expect(test).to.throw(Error, /No model/);
+    });
+
+    it('creates GET_SUCCEEDED when the request completes successfully', ( done ) => {
+
+      let data = { type: 'test', id: '1' };
+      let expectedActions = [
+        { type: 'GET_TEST' },
+        { type: 'GET_TEST_SUCCEEDED' },
+      ];
+      let store = mockStore({}, expectedActions, done);
+
+      nock('http://example.com').get('/tests/1').reply(200, { data });
+      store.dispatch(actions.get('test', '1'));
+    });
+
+    it('creates GET_FAILED when the request fails', ( done ) => {
+
+      let expectedActions = [
+        { type: 'GET_TEST' },
+        { type: 'GET_TEST_FAILED' },
+      ];
+      let store = mockStore({}, expectedActions, done);
+
+      nock('http://example.com').get('/tests/1').reply(500);
+      store.dispatch(actions.get('test', '1'));
+    });
+  });
+
   describe('getAll', () => {
 
     it('should throw if no corresponding Kudu model is found', () => {

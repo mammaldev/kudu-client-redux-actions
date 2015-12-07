@@ -42,6 +42,35 @@ export default function createKuduActionCreators( kudu ) {
       };
     },
 
+    // Make a request to the server for a specific instance of the given type.
+    // Generally this would result in a GET request to a URL in the format
+    // /api/:type/:id. Any options supported by the Kudu client library are
+    // supported here and simply passed through.
+    //
+    // Arguments:
+    //   type    {String}    The singular name of a model registered with the
+    //                       given Kudu instance.
+    //   id      {String}    The unique identifier of a specific model instance.
+    //
+    get( type, id, opts = {} ) {
+
+      return ( dispatch ) => {
+
+        const Model = kudu.getModel(type);
+
+        if ( !Model ) {
+          throw new Error(`No model constructor found for type "${ type }"`);
+        }
+
+        const singular = Model.singular;
+        dispatch(getRequested(singular, id));
+
+        return Model.get(id, opts)
+        .then(( instance ) => dispatch(getSucceeded(singular, instance)))
+        .catch(( error ) => dispatch(getFailed(singular, error)));
+      };
+    },
+
     // Make a request to the server for all instances of the given type.
     // Generally this would result in a GET request to a URL in the format
     // /api/:type. Any options supported by the Kudu client library are
@@ -107,6 +136,46 @@ function saveSucceeded( type, instance ) {
 function saveFailed( type, error ) {
   return {
     type: `SAVE_${ type.toUpperCase() }_FAILED`,
+    error,
+  };
+}
+
+// Dispatched when a "get" action is dispatched.
+//
+// Arguments:
+//   type    {String}    The singular name of the Kudu model being requested.
+//   id      {String}    The unique identifier of the instance being requested.
+//
+function getRequested( type, id ) {
+  return {
+    type: `GET_${ type.toUpperCase() }`,
+    id,
+  };
+}
+
+// Dispatched when a "get" action completes successfully.
+//
+// Arguments:
+//   type        {String}    The singular name of a model registered with a Kudu
+//                           app.
+//   instance    {Object}    A Kudu model instance of the type specified.
+//
+function getSucceeded( type, instance ) {
+  return {
+    type: `GET_${ type.toUpperCase() }_SUCCEEDED`,
+    [ type ]: instance,
+  };
+}
+
+// Dispatched when a "get" action fails.
+//
+// Arguments:
+//   type     {String}    The singular name of the model that was requested.
+//   error    {Error}     An Error object representing the reason for failure.
+//
+function getFailed( type, error ) {
+  return {
+    type: `GET_${ type.toUpperCase() }_FAILED`,
     error,
   };
 }
