@@ -170,4 +170,40 @@ describe('Actions', () => {
       store.dispatch(actions.getAll('test'));
     });
   });
+
+describe('update', () => {
+
+    it('should throw if not passed a Kudu model instance', () => {
+      let store = mockStore({}, []);
+      let test = () => store.dispatch(actions.update());
+      expect(test).to.throw(Error, /Expected a model instance/);
+    });
+
+    it('creates UPDATE_SUCCEEDED when the request completes successfully', ( done ) => {
+
+      let data = new MockModel({ name: 'test', id: '1' });
+      let response = mockApp.serialize.toJSON(new MockModel({ name: 'test', id: '1' }));
+      let expectedActions = [
+        { type: 'UPDATE_TEST' },
+        { type: 'UPDATE_TEST_SUCCEEDED' },
+      ];
+      let store = mockStore({}, expectedActions, done);
+
+      nock('http://example.com').patch('/tests').reply(201, response);
+      store.dispatch(actions.update('test', data));
+    });
+
+    it('creates UPDATE_FAILED when the request fails', ( done ) => {
+
+      let data = new MockModel({ name: 'test', id: '1' });
+      let expectedActions = [
+        { type: 'UPDATE_TEST' },
+        { type: 'UPDATE_TEST_FAILED' },
+      ];
+      let store = mockStore({}, expectedActions, done);
+
+      nock('http://example.com').patch('/tests').reply(500);
+      store.dispatch(actions.update('test', data));
+    });
+  });
 });

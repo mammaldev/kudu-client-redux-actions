@@ -100,6 +100,27 @@ export default function createKuduActionCreators( kudu ) {
         );
       };
     },
+
+    // Make a request to the server to update a stored model instance. Generally
+    // this would result in a PATCH request to a URL in the format
+    // /api/:type/:id. Any options supported by the Kudu client library are
+    // supported here and simply passed through.
+    update( type, instance, opts = {} ) {
+
+      return ( dispatch ) => {
+
+        if ( !instance || typeof instance.update !== 'function' ) {
+          throw new Error('Expected a model instance to update.');
+        }
+
+        const type = instance.constructor.singular;
+        dispatch(updateRequested(type));
+
+        return instance.update(opts)
+        .then(( instance ) => dispatch(updateSucceeded(type, instance)))
+        .catch(( error ) => dispatch(updateFailed(type, error)));
+      };
+    },
   };
 }
 
@@ -215,6 +236,43 @@ function getAllSucceeded( type, instances ) {
 function getAllFailed( type, error ) {
   return {
     type: `GET_ALL_${ type.toUpperCase() }_FAILED`,
+    error,
+  };
+}
+
+// Dispatched when the "update" action creator is run.
+//
+// Arguments:
+//   type    {String}    The singular name of a Kudu model.
+//
+function updateRequested( type ) {
+  return {
+    type: `UPDATE_${ type.toUpperCase() }`,
+  };
+}
+
+// Dispatched when an "update" action has completed successfully.
+//
+// Arguments:
+//   type        {String}    The singular name of a Kudu model.
+//   instance    {Object}    The instance that has been saved.
+//
+function updateSucceeded( type, instance ) {
+  return {
+    type: `UPDATE_${ type.toUpperCase() }_SUCCEEDED`,
+    [ type ]: instance,
+  };
+}
+
+// Dispatched when an "update" action has failed.
+//
+// Arguments:
+//   type     {String}    The singular name of a Kudu model.
+//   error    {Error}     An Error object representing the reason for failure.
+//
+function updateFailed( type, error ) {
+  return {
+    type: `UPDATE_${ type.toUpperCase() }_FAILED`,
     error,
   };
 }
