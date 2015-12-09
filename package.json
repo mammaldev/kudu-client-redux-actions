@@ -1,6 +1,6 @@
 {
   "name": "kudu-client-redux-actions",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "main": "lib/actions.js",
   "scripts": {
     "compile": "babel -d lib/ src/",
