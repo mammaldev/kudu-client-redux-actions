@@ -189,7 +189,7 @@ describe('update', () => {
       ];
       let store = mockStore({}, expectedActions, done);
 
-      nock('http://example.com').patch('/tests').reply(201, response);
+      nock('http://example.com').put('/tests/1').reply(201, response);
       store.dispatch(actions.update('test', data));
     });
 
